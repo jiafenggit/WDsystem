@@ -13,12 +13,11 @@ use Facebook\WebDriver\WebDriverBy;
 class Webdriver extends Controller
 {
     /**
-     * Show the profile for the given user.
+     * 启动系统
      *
-     * @param  int  $id
      * @return Response
      */
-    public function __invoke()
+    public function run()
     {
 
         //通过selenium + geckodirver 驱动本地firefox
@@ -95,13 +94,13 @@ class Webdriver extends Controller
                     break;
                 case 'exit':
                     $driver->quit();
-                    break;
+                    break ;
                 default:
-                    echo '不合法命令';
+                    echo "不合法命令\n";
                     break;
 
             }
-            goto cmd;
+            if ($strin != 'exit') goto cmd;
         }
 
 
