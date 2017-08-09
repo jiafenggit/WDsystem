@@ -2,16 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use App\User;
-use App\Http\Controllers\Controller;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\Cookie;
+use Fn;
 
 
+
+/**
+ * Class Webdriver
+ * @package App\Http\Controllers
+ * 系统启动入口类
+ */
 class Webdriver extends Controller
 {
+    function __construct()
+    {
+
+
+    }
+
     /**
      * 启动系统
      *
@@ -29,26 +41,102 @@ class Webdriver extends Controller
         $capabilities = DesiredCapabilities::firefox();
         // start Firefox with 5 second timeout
         $driver = RemoteWebDriver::create($host, $capabilities, 5000);
+        //查询是否已经有cookie，若有，不进行登录操作。
+        $cookies= Fn::getWebCookie();
+        if(!$cookies){
+            $driver->get('https://www.zhihu.com/#signin');
+            $driver->wait(10)->until(
+                WebDriverExpectedCondition::presenceOfAllElementsLocatedBy(
+                    WebDriverBy::className('signin-switch-password')
+                )
+            );
+            $password_login = $driver->findElement(WebDriverBy::className('signin-switch-password'))->click();
+            //输入账号密码
+            $account = "583471388@qq.com";
+            $password = "aaa1101990";
+            $driver->findElement(WebDriverBy::name('account'))->sendKeys($account);
+            $driver->findElement(WebDriverBy::name('password'))->sendKeys($password);
+            Fn::shellOutput('已自动填充账户密码','success');
+        }else{
+            Fn::shellOutput('已有cookie');
 
-        $driver->get('https://www.zhihu.com/#signin');
+//            dump($cookies);
+//             adding cookie
+            $driver->get('https://www.zhihu.com');
+            $driver->manage()->deleteAllCookies();
 
-        $driver->wait(10)->until(
-            WebDriverExpectedCondition::presenceOfAllElementsLocatedBy(
-                WebDriverBy::className('signin-switch-password')
-            )
-        );
-        $password_login = $driver->findElement(WebDriverBy::className('signin-switch-password'))->click();
-        //输入账号密码
-        $account = "583471388@qq.com";
-        $password = "aaa1101990";
-        $driver->findElement(WebDriverBy::name('account'))->sendKeys($account);
-        $driver->findElement(WebDriverBy::name('password'))->sendKeys($password);
+            foreach ($cookies as $key =>$row){
+                $cookie_row = Cookie::createFromArray($row);
 
-        // adding cookie
-        //$driver->manage()->deleteAllCookies();
-        //$cookie = new Cookie('cookie_name', 'cookie_value');
-        //$driver->manage()->addCookie($cookie);
-        //$cookies = $driver->manage()->getCookies();
+                $driver->manage()->addCookie($cookie_row);
+            }
+            Fn::shellOutput('添加cookie成功，即将进入网站','success');
+
+            $driver->get('https://www.zhihu.com');
+
+
+        }
+
+        //命令集合
+        $adv='';//优先执行的命令
+        goto cmd;
+        cmd:{
+        Fn::shellOutput('等待命令：');
+
+        $strin = $adv?:fread(STDIN,1000);
+        $strin = trim($strin);
+        switch ((string)$strin){
+            case 'login':
+                Fn::shellOutput('已手动操作登录');
+                //必须是登录的网址
+                $driver->findElement(WebDriverBy::cssSelector('button.submit[type=submit]'))->click();
+                sleep(2);
+                $cookies = $driver->manage()->getCookies();
+                //保存cookie，保存标识。下次启动直接调用cookie
+                foreach ($cookies as $row){
+                    $cookies_data[] = $row->toArray();
+                }
+
+                $save = Fn::saveWebCookie($cookies_data);
+                if(!$save){
+                    Fn::shellOupt('保持cookie失败','fail');
+                }
+                break;
+            case 'exit':
+                $driver->quit();
+                break ;
+            case 'delcookie':
+                Fn::delWebCookie();
+                $adv='exit';
+                break;
+            default:
+                echo "不合法命令\n";
+                break;
+
+        }
+        if ($strin != 'exit') goto cmd;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         //print_r($cookies);
         // click the link 'About'
@@ -76,34 +164,16 @@ class Webdriver extends Controller
         //$driver->wait()->until(
         //    WebDriverExpectedCondition::titleContains('subm')
         //);
-        goto cmd;
-        cmd:{
-            $strout = fwrite(STDOUT,'请输入命令:');
-            $strin = fread(STDIN,1000);
-
-            $strin = trim($strin);
-            switch ((string)$strin){
-                case 'login':
-                    echo '已手动操作登录';
-                    $driver->findElement(WebDriverBy::cssSelector('button.submit[type=submit]'))->click();
-                    sleep(2);
-                    $cookies = $driver->manage()->getCookies();
-                    print_r($cookies);
-                    //保存cookie，保存标识。下次启动直接调用cookie
-
-                    break;
-                case 'exit':
-                    $driver->quit();
-                    break ;
-                default:
-                    echo "不合法命令\n";
-                    break;
-
-            }
-            if ($strin != 'exit') goto cmd;
-        }
 
 
-        }
+    }
+
+
+
+
+
+
+
+
 }
 

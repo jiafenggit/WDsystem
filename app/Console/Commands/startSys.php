@@ -4,6 +4,12 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Http\Controllers\Webdriver;
+
+/**
+ * Class startSys
+ * @package App\Console\Commands
+ * 系统启动命令 绑定
+ */
 class startSys extends Command
 {
     /**

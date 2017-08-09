@@ -14,4 +14,4 @@
 Route::get('/', function () {
     return view('welcome');
 });
-//Route::get('/webdriver','Webdriver') ;
+Route::get('/webdriver','Webdriver@run') ;
