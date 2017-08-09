@@ -16,6 +16,15 @@ class FnService extends Controller {
 //        $this->config_model = $config;
 //    }
 
+    function getConfigValue($key){
+        $config = new Config();
+        $rel = $config->getValue($key);
+        if(!empty($rel)){
+            return $rel;
+        }else{
+            return false;
+        }
+    }
     /**
      * 获取是否已经存储过cookie
      */
