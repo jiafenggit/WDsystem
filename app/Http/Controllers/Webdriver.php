@@ -52,8 +52,8 @@ class Webdriver extends Controller
             );
             $password_login = $driver->findElement(WebDriverBy::className('signin-switch-password'))->click();
             //输入账号密码
-            $account = "583471388@qq.com";
-            $password = "aaa1101990";
+            $account = Fn::getConfigValue('web_account');
+            $password = Fn::getConfigValue('web_password');
             $driver->findElement(WebDriverBy::name('account'))->sendKeys($account);
             $driver->findElement(WebDriverBy::name('password'))->sendKeys($password);
             Fn::shellOutput('已自动填充账户密码','success');
