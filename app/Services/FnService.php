@@ -9,7 +9,7 @@ namespace App\Services;
 use App\Http\Controllers\Controller;
 use App\Config;
 class FnService extends Controller {
-    public $web_cookie = 'web_cookie';
+    public $web_cookie = 'web_cookie_';
 //没必要注入，config只是个一张表
 //    function __construct(Config $config)
 //    {
@@ -28,9 +28,9 @@ class FnService extends Controller {
     /**
      * 获取是否已经存储过cookie
      */
-    function getWebCookie(){
+    function getWebCookie($key){
         $config = new Config();
-        $rel = $config->getValue($this->web_cookie);
+        $rel = $config->getValue($this->web_cookie.$key);
         if(!empty($rel)){
             return json_decode($rel,true);
         }else{
@@ -39,21 +39,21 @@ class FnService extends Controller {
     }
 
 
-    function saveWebCookie($array){
+    function saveWebCookie($key,$array){
         $config = new Config();
         $data ['value'] = json_encode($array);
         $data ['type'] ='sys';//系统
         $data ['description'] ='网址cookie';
 
 
-        $rel = $config->saveValue($this->web_cookie,$data);
+        $rel = $config->saveValue($this->web_cookie.$key,$data);
 
         return $rel;
     }
 
-    function delWebCookie(){
+    function delWebCookie($key){
         $config = new Config();
-        $rel = $config->delrow($this->web_cookie);
+        $rel = $config->delrow($this->web_cookie.$key);
         return $rel;
     }
     /**

@@ -179,6 +179,7 @@ return [
 
         //基础服务
         App\Providers\BaseFnServiceProvider::class,
+        App\Providers\WebServiceProvider::class,
 
     ],
 

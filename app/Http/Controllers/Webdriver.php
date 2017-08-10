@@ -7,7 +7,11 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\Cookie;
+
+use Facebook\WebDriver\WebDriverKeys;
 use Fn;
+use App;
+
 
 
 
@@ -18,96 +22,122 @@ use Fn;
  */
 class Webdriver extends Controller
 {
-    function __construct()
-    {
-
-
-    }
-
+//    function __construct(web $web)
+//    {
+//
+//        $this->web = $web;
+//
+//    }
+    //下一次需要执行的命令
+    public $adv = '';
     /**
      * 启动系统
      *
      * @return Response
+     * 通过selenium + geckodirver 驱动本地firefox
+     * 在public目录下执行以下命令
+     * java  -jar selenium-server-standalone-3.4.0.jar
+     * java -Dwebdriver.gecko.driver = "/Users/zhangzhi/PhpstormProjects/php-webdriver/php-webdriver/geckodriver" -jar selenium-server-standalone-3.4.0.jar
      */
-    public function run()
+    public function run($id)
     {
-
-        //通过selenium + geckodirver 驱动本地firefox
-        //在本目录下执行以下命令
-        //java -Dwebdriver.gecko.driver = "/Users/zhangzhi/PhpstormProjects/php-webdriver/php-webdriver/geckodriver" -jar selenium-server-standalone-3.4.0.jar
-        //java  -jar selenium-server-standalone-3.4.0.jar
 
         $host = 'http://localhost:4444/wd/hub/';//用于启动selenium，只支持firefox
         $capabilities = DesiredCapabilities::firefox();
         // start Firefox with 5 second timeout
         $driver = RemoteWebDriver::create($host, $capabilities, 5000);
+
+$driver->get('http://baidu.com');
+
+        $current_handle = $driver->getWindowHandle();
+        $handles = $driver->getWindowHandles();
+        dump($current_handle);
+        dump($handles);
+
+//         using the browser shortcut to create a new tab
+        $driver->getKeyboard()->sendKeys(
+            array(WebDriverKeys::COMMAND, 't')
+        );
+
+        // using the browser shortcut to create a new window
+//        $driver->getKeyboard()->sendKeys(
+//            array(WebDriverKeys::COMMAND, 'n')
+//        );
+//        $driver->switchTo()->window(
+//            end($driver->getWindowHandles())
+//        );
+$driver->quit();
+
+
+
+
+
+
         //查询是否已经有cookie，若有，不进行登录操作。
-        $cookies= Fn::getWebCookie();
+        $web = App::makeWith('App\Http\Controller\Webs\Web',['id'=>$id]);
+        $web->setDriver($driver);
+        $web_name = $web->getWebName();
+
+        $cookies= Fn::getWebCookie($web_name);
         if(!$cookies){
-            $driver->get('https://www.zhihu.com/#signin');
-            $driver->wait(10)->until(
-                WebDriverExpectedCondition::presenceOfAllElementsLocatedBy(
-                    WebDriverBy::className('signin-switch-password')
-                )
-            );
-            $password_login = $driver->findElement(WebDriverBy::className('signin-switch-password'))->click();
-            //输入账号密码
-            $account = Fn::getConfigValue('web_account');
-            $password = Fn::getConfigValue('web_password');
-            $driver->findElement(WebDriverBy::name('account'))->sendKeys($account);
-            $driver->findElement(WebDriverBy::name('password'))->sendKeys($password);
-            Fn::shellOutput('已自动填充账户密码','success');
-        }else{
-            Fn::shellOutput('已有cookie');
-
-//            dump($cookies);
-//             adding cookie
-            $driver->get('https://www.zhihu.com');
-            $driver->manage()->deleteAllCookies();
-
-            foreach ($cookies as $key =>$row){
-                $cookie_row = Cookie::createFromArray($row);
-
-                $driver->manage()->addCookie($cookie_row);
+            $cmd = $web->login();
+            if($cmd){
+                $this->setAdv($cmd);
             }
-            Fn::shellOutput('添加cookie成功，即将进入网站','success');
-
-            $driver->get('https://www.zhihu.com');
-
+        }else{
+           $web->loginByCookie($cookies);
 
         }
 
+        //优先执行的命令
+
+
+
         //命令集合
-        $adv='';//优先执行的命令
         goto cmd;
         cmd:{
-        Fn::shellOutput('等待命令：');
 
-        $strin = $adv?:fread(STDIN,1000);
+        if(!$this->adv){
+            Fn::shellOutput('等待命令：');
+        }
+        $strin = $this->adv?:fread(STDIN,1000);
         $strin = trim($strin);
+        //清空命令
+        $this->delAdv();
         switch ((string)$strin){
             case 'login':
-                Fn::shellOutput('已手动操作登录');
-                //必须是登录的网址
-                $driver->findElement(WebDriverBy::cssSelector('button.submit[type=submit]'))->click();
+                //如果需要验证，可在该函数内完成，并且点击登录
+                $web->loginByVerify();
                 sleep(2);
                 $cookies = $driver->manage()->getCookies();
                 //保存cookie，保存标识。下次启动直接调用cookie
-                foreach ($cookies as $row){
-                    $cookies_data[] = $row->toArray();
-                }
 
-                $save = Fn::saveWebCookie($cookies_data);
+                foreach ($cookies as $row){
+
+                    $arr = $row->toArray();
+                    if($arr['name'] == 'user_id'){
+                        $arr['domain'] = trim($arr['domain'],'.');
+                    }
+                    $cookies_data[] = $arr;
+                }
+                $save = Fn::saveWebCookie($web_name,$cookies_data);
                 if(!$save){
                     Fn::shellOupt('保持cookie失败','fail');
                 }
+
                 break;
             case 'exit':
                 $driver->quit();
                 break ;
             case 'delcookie':
-                Fn::delWebCookie();
-                $adv='exit';
+                Fn::delWebCookie($web_name);
+                $this->setAdv('exit');
+
+                break;
+
+            case 'main' :
+                $web->main();
+                $this->setAdv('exit');
                 break;
             default:
                 echo "不合法命令\n";
@@ -170,7 +200,12 @@ class Webdriver extends Controller
 
 
 
-
+     public function setAdv($adv){
+        $this->adv =$adv;
+    }
+     public function delAdv(){
+         $this->adv = '';
+     }
 
 
 

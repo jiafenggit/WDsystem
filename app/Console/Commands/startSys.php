@@ -45,7 +45,15 @@ class startSys extends Command
     public function handle()
     {
         //
-        $this->webdriver->run();
+        $this->info('选择启动哪个网站，1:知乎 2:爱股票');
+        $id = $this->ask('你的选择是');
+        if(in_array($id,[1,2])){
+            $this->webdriver->run($id);
+        }else{
+            $this->error('不合法输入');
+        }
+
+
 
 
     }
