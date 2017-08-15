@@ -1,21 +1,22 @@
  涉及到的资源 laravel | webdriver | firefox | geckodriver | selenium
  
- ###该项目用于练手。
+ ### 该项目用于练手。
  
  涉及到的相关资源
+ 
  ````
- •	Php-webdriver（https://github.com/popzhangzhi/php-webdriver/）
- •	Selenium服务器端 （http://seleniumrelease.storage.googleapis.com/index.html?path=3.4/）selenium-server-standalone-3.4.0.jar
- •	Firefox+Geckodriver驱动（https://github.com/lmc-eu/steward/wiki/Selenium-server-&-browser-drivers#option-2-start-selenium-server--browser-inside-docker-）
+ •  Php-webdriver（https://github.com/popzhangzhi/php-webdriver/）
+ •  Selenium服务器端 （http://seleniumrelease.storage.googleapis.com/index.html?path=3.4/）selenium-server-standalone-3.4.0.jar
+ •  Firefox+Geckodriver驱动（https://github.com/lmc-eu/steward/wiki/Selenium-server-&-browser-drivers#option-2-start-selenium-server--browser-inside-docker-）
  •  laravel 5.4
  •  php 7.1 （至少大于5.6，因为laravel需求） 
  •  nginx
  •  mysql 5.7
  ````
  
- #####接下来是启动项目流程的命令
+ ##### 接下来是启动项目流程的命令
  
- 因为没有配置自动启动的原因，需要手动启动（mac）
+ 因为没有配置自动启动的原因，需要手动启动（mac）。
  
  本机启动 nginx
  
@@ -34,7 +35,7 @@
 
  
  
- ####已实现功能：模拟游览器人工登录网站。
+ #### 已实现功能：模拟游览器人工登录网站。
  
  环境：只能在shell下运行，开发在nginx php7.1.4 mysql5.7 laravel5.4
  

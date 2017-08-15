@@ -90,7 +90,7 @@ class AiGuPiao extends  Web
         $elements = $driver->findElements(WebDriverBy::cssSelector('ul.my_zxg_d>li:first-child>a,ul.my_zxg_u>li:first-child>a'));
 //        dump(count($elements));
         $main = $driver->getWindowHandle();
-        dump($main);
+//        dump($main);
 
         foreach ($elements as $key => $element) {
 
@@ -132,7 +132,7 @@ class AiGuPiao extends  Web
 
 
     function getContent(){
-        
+
         $data = ['能不能涨停一次','快涨快涨啊！！','怎么走成这样','能不能做个T？'];
         $rand = rand(0,3);
         return $data[$rand];
