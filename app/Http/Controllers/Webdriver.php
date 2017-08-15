@@ -41,37 +41,11 @@ class Webdriver extends Controller
      */
     public function run($id)
     {
-
+        set_time_limit(0);
         $host = 'http://localhost:4444/wd/hub/';//用于启动selenium，只支持firefox
         $capabilities = DesiredCapabilities::firefox();
         // start Firefox with 5 second timeout
         $driver = RemoteWebDriver::create($host, $capabilities, 5000);
-
-$driver->get('http://baidu.com');
-
-        $current_handle = $driver->getWindowHandle();
-        $handles = $driver->getWindowHandles();
-        dump($current_handle);
-        dump($handles);
-
-//         using the browser shortcut to create a new tab
-        $driver->getKeyboard()->sendKeys(
-            array(WebDriverKeys::COMMAND, 't')
-        );
-
-        // using the browser shortcut to create a new window
-//        $driver->getKeyboard()->sendKeys(
-//            array(WebDriverKeys::COMMAND, 'n')
-//        );
-//        $driver->switchTo()->window(
-//            end($driver->getWindowHandles())
-//        );
-$driver->quit();
-
-
-
-
-
 
         //查询是否已经有cookie，若有，不进行登录操作。
         $web = App::makeWith('App\Http\Controller\Webs\Web',['id'=>$id]);
@@ -86,6 +60,7 @@ $driver->quit();
             }
         }else{
            $web->loginByCookie($cookies);
+           $this->setAdv('main');
 
         }
 
@@ -137,7 +112,7 @@ $driver->quit();
 
             case 'main' :
                 $web->main();
-                $this->setAdv('exit');
+//                $this->setAdv('exit');
                 break;
             default:
                 echo "不合法命令\n";

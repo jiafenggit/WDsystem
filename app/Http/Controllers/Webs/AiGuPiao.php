@@ -81,29 +81,83 @@ class AiGuPiao extends  Web
 
     /**
      * 主入口。
+     * 1.找到股票代码。 60条
+     * 2.进入每一条代码。
+     * 3.点击研报，找寻合适的评论，提交评论
      */
     public function main(){
         $driver = $this->driver;
-        $current_handle = $driver->getWindowHandle();
-        $handles = $driver->getWindowHandles();
-        dump($current_handle);
-        dump($handles);
+        $elements = $driver->findElements(WebDriverBy::cssSelector('ul.my_zxg_d>li:first-child>a,ul.my_zxg_u>li:first-child>a'));
+//        dump(count($elements));
+        $main = $driver->getWindowHandle();
+        dump($main);
 
-        // using the browser shortcut to create a new tab
-//        $driver->getKeyboard()->sendKeys(
-//            array(WebDriverKeys::CONTROL, 't')
-//        );
-//
-//        // using the browser shortcut to create a new window
-//        $driver->getKeyboard()->sendKeys(
-//            array(WebDriverKeys::CONTROL, 'n')
-//        );
-//        $driver->switchTo()->window(
-//            end($driver->getWindowHandles())
-//        );
+        foreach ($elements as $key => $element) {
+
+
+            $goto = $element->click();
+            //这次操作后，新生成一个新的窗口，$driver 在不切换窗口的情况下能检测到新窗口的元素
+            $driver->wait(10)->until(
+                WebDriverExpectedCondition::presenceOfAllElementsLocatedBy(
+                    WebDriverBy::id('v2_publishIpt')
+                )
+            );
+            //now can iterate through array to get desired handle
+            $handles = $driver->getWindowHandles();
+//            dump($handles);
+            $driver->switchTo()->window(
+                end($handles)
+            );
+            //加载界面后，需要延迟几秒，保证节点能够切换过去，保证能找到元素
+            sleep(2);
+            //在新窗口找出元素，操作元素，需要保证已经切换到新窗口内。配合sleep（2）
+            $textarea = $driver->findElement(WebDriverBy::id('v2_publishIpt'));
+            $content = $this->getContent();
+            $textarea->clear()->sendKeys($content);
+            $driver->findElement(WebDriverBy::id('pbBtn'))->click();
+            sleep(3);
+            $driver->close();
+            $driver->switchTo()->window(
+               $main
+            );
+            if($key  == 1){
+                break;
+            }
+
+        }
+
+
 
     }
 
+
+    function getContent(){
+        
+        $data = ['能不能涨停一次','快涨快涨啊！！','怎么走成这样','能不能做个T？'];
+        $rand = rand(0,3);
+        return $data[$rand];
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+   function jsInsert(){
+
+        $text='123php';
+        $js = "console.log(123);var sum=document.getElementById('v2_publishIpt'); sum.value='" .$text . "';";
+        $js = "console.log(123);";
+        dump($js);
+//        $driver->executeScript($js);
+
+   }
 
 
 }
