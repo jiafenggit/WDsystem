@@ -11,6 +11,7 @@ use Facebook\WebDriver\Cookie;
 use Facebook\WebDriver\WebDriverKeys;
 use Fn;
 
+
 class AiGuPiao extends  Web
 {
 
@@ -19,9 +20,9 @@ class AiGuPiao extends  Web
     protected $driver;
     public $login_url = 'https://www.5igupiao.com/user/hotstock.php';
     public $home = 'https://www.5igupiao.com/user/hotstock.php';
-
-    //
-
+    public $home_mark ="my_zxg";
+    //主窗口
+    public $main;
 
     /**
      * 自动填充账户密码
@@ -65,6 +66,7 @@ class AiGuPiao extends  Web
         }
         Fn::shellOutput('添加cookie成功，即将进入网站','success');
         $driver->get($this->home);
+
     }
 
     /**
@@ -88,54 +90,68 @@ class AiGuPiao extends  Web
     public function main(){
         $driver = $this->driver;
         $elements = $driver->findElements(WebDriverBy::cssSelector('ul.my_zxg_d>li:first-child>a,ul.my_zxg_u>li:first-child>a'));
-//        dump(count($elements));
-        $main = $driver->getWindowHandle();
-//        dump($main);
+        $count = (count($elements));
+        $this->main = $driver->getWindowHandle();
+//        dump('主窗口:'.$this->main);
 
+        $offset = 60;
+        $length = 5;
+        $elements = array_slice($elements,$offset,$length);
+        Fn::shellOutput("待评价股票数$count ,从$offset 条开始至之后的 $length 条",'success');
+        $i = 0;
         foreach ($elements as $key => $element) {
 
-
+            $code = $element->getText();
+            $content = $this->getContent($code);
+            if(empty($content)) continue;
             $goto = $element->click();
-            //这次操作后，新生成一个新的窗口，$driver 在不切换窗口的情况下能检测到新窗口的元素
-            $driver->wait(10)->until(
+            //这次操作后，新生成一个新的窗口，$driver 在不切换窗口的情况下能检测到新窗口的元素，并且等待加载
+            $driver->wait(30)->until(
                 WebDriverExpectedCondition::presenceOfAllElementsLocatedBy(
-                    WebDriverBy::id('v2_publishIpt')
+                    WebDriverBy::id('pbBtn')
                 )
             );
-            //now can iterate through array to get desired handle
-            $handles = $driver->getWindowHandles();
-//            dump($handles);
-            $driver->switchTo()->window(
-                end($handles)
-            );
-            //加载界面后，需要延迟几秒，保证节点能够切换过去，保证能找到元素
-            sleep(2);
-            //在新窗口找出元素，操作元素，需要保证已经切换到新窗口内。配合sleep（2）
+            Fn::switchWin($driver,'next','pbBtn');
+            Fn::logAllWindows($driver,'打开评论界面');
             $textarea = $driver->findElement(WebDriverBy::id('v2_publishIpt'));
-            $content = $this->getContent();
             $textarea->clear()->sendKeys($content);
+            sleep(3);
             $driver->findElement(WebDriverBy::id('pbBtn'))->click();
             sleep(3);
             $driver->close();
-            $driver->switchTo()->window(
-               $main
-            );
-            if($key  == 1){
-                break;
-            }
+            Fn::switchWin($driver,$this->main,'');
+            Fn::logAllWindows($driver,'关闭评论界面');
+            $i++;
 
         }
-
+        Fn::shellOutput("成功评论条数$i",'success');
 
 
     }
 
 
-    function getContent(){
+    function getContent($code){
+        $driver = $this->driver;
+        $js="window.open('http://guba.eastmoney.com/list,$code.html')";
+        $driver->executeScript($js);
+        Fn::switchWin($driver,'next','mainbody');
+        Fn::logAllWindows($driver,'打开内容页');
+        $elements = $driver->findElements(WebDriverBy::cssSelector('div.articleh>span:nth-child(3)>a'));
+//        dump(count($elements));
+        if(count($elements) >=25){
+            $rand = rand(15,25);
+            $data = $elements[$rand]->getAttribute('title');
+        }else{
+            $data = '';
+        }
 
-        $data = ['能不能涨停一次','快涨快涨啊！！','怎么走成这样','能不能做个T？'];
-        $rand = rand(0,3);
-        return $data[$rand];
+        Fn::shellOutput($data);
+
+        $driver->close();
+        Fn::switchWin($driver,$this->main,'');
+        Fn::logAllWindows($driver,'关闭内容页');
+
+        return $data;
 
     }
 
@@ -146,18 +162,6 @@ class AiGuPiao extends  Web
 
 
 
-
-
-
-   function jsInsert(){
-
-        $text='123php';
-        $js = "console.log(123);var sum=document.getElementById('v2_publishIpt'); sum.value='" .$text . "';";
-        $js = "console.log(123);";
-        dump($js);
-//        $driver->executeScript($js);
-
-   }
 
 
 }

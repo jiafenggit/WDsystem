@@ -41,7 +41,9 @@ class Webdriver extends Controller
      */
     public function run($id)
     {
+        define('DEBUG',true);
         set_time_limit(0);
+
         $host = 'http://localhost:4444/wd/hub/';//用于启动selenium，只支持firefox
         $capabilities = DesiredCapabilities::firefox();
         // start Firefox with 5 second timeout
